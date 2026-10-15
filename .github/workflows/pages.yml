@@ -1,0 +1,91 @@
+name: Deploy Cockpit Drill
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build site
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cat pkg/app.* | base64 -d | gzip -dc > _site/index.html
+          test "$(sha256sum _site/index.html | awk '{print $1}')" = "f033ad7f90d3f61ec837663b3639f887b563b6b384c1b20c2f8ba0c8cff6b980"
+          cp manifest.webmanifest sw.js _site/
+          touch _site/.nojekyll
+          python3 - <<'PY'
+          import struct, zlib
+
+          def make_png(path, size):
+              bg = (13, 20, 26)
+              accent = (226, 88, 159)
+              white = (238, 243, 246)
+              rows = []
+              b = max(5, size // 24)
+              cx = size // 2
+              cy = size // 2
+              line = max(3, size // 50)
+              wing = size // 5
+              body = size // 4
+              for y in range(size):
+                  row = bytearray([0])
+                  for x in range(size):
+                      color = bg
+                      if x < b or y < b or x >= size-b or y >= size-b:
+                          color = accent
+                      if abs(x-cx) <= line and abs(y-cy) <= body:
+                          color = white
+                      if abs(y-cy) <= line and abs(x-cx) <= wing:
+                          color = white
+                      if cy-body <= y <= cy-body + line*3 and abs(x-cx) <= line*3:
+                          color = white
+                      row.extend(color)
+                  rows.append(bytes(row))
+              raw = b''.join(rows)
+              def chunk(kind, data):
+                  return struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data) & 0xffffffff)
+              png = b'\x89PNG\r\n\x1a\n'
+              png += chunk(b'IHDR', struct.pack('>IIBBBBB', size, size, 8, 2, 0, 0, 0))
+              png += chunk(b'IDAT', zlib.compress(raw, 9))
+              png += chunk(b'IEND', b'')
+              with open(path, 'wb') as f:
+                  f.write(png)
+
+          make_png('_site/apple-touch-icon.png', 180)
+          make_png('_site/icon-192.png', 192)
+          make_png('_site/icon-512.png', 512)
+          PY
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
