@@ -39,12 +39,14 @@ jobs:
           p.write_text(s)
           PY
           cp manifest.webmanifest sw.js enhance.js cockpit.js _site/
-          # Viper HQ: reconstruct from text chunks to avoid binary truncation in the connector.
-          cat imgdata/viper.00 imgdata/viper.01 imgdata/viper.02 | base64 -d > _site/assets/viper-cockpit-hq.webp
+
+          # Rebuild the higher-resolution cockpit images from text chunks.
+          cat imgdata/viper.* | tr -d '\n\r\t ' | base64 -d > _site/assets/viper-cockpit-hq.webp
           test "$(sha256sum _site/assets/viper-cockpit-hq.webp | awk '{print $1}')" = "ea2282af65e911aa93477267509ef29dd4d3feafd6b7c6b007c4fab5c6cfc404"
-          # DR400: use the stable photo asset; patch only the deployed JS path.
-          cp assets/dr400-cockpit.jpg _site/assets/dr400-cockpit.jpg
-          sed -i "s#assets/dr400-cockpit-hq.webp#assets/dr400-cockpit.jpg#g" _site/cockpit.js
+
+          cat imgdata/dr400.* | tr -d '\n\r\t ' | base64 -d > _site/assets/dr400-cockpit-hq.webp
+          test "$(sha256sum _site/assets/dr400-cockpit-hq.webp | awk '{print $1}')" = "05a49ef2d08b5f3575af79d96ddf37615bf6f0c7f9b58e28b934d7cc2b928227"
+
           touch _site/.nojekyll
           python3 - <<'PY'
           import struct, zlib
