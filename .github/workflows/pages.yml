@@ -28,17 +28,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p _site
+          mkdir -p _site/assets
           cat pkg/app.* | base64 -d | gzip -dc > _site/index.html
           test "$(sha256sum _site/index.html | awk '{print $1}')" = "f033ad7f90d3f61ec837663b3639f887b563b6b384c1b20c2f8ba0c8cff6b980"
           python3 - <<'PY'
           from pathlib import Path
           p=Path('_site/index.html')
           s=p.read_text()
-          s=s.replace('</body>', '<script src="enhance.js"></script>\n</body>')
+          s=s.replace('</body>', '<script src="enhance.js"></script>\n<script src="cockpit.js"></script>\n</body>')
           p.write_text(s)
           PY
-          cp manifest.webmanifest sw.js enhance.js _site/
+          cp manifest.webmanifest sw.js enhance.js cockpit.js _site/
+          cp assets/viper-cockpit.jpg assets/dr400-cockpit.jpg _site/assets/
           touch _site/.nojekyll
           python3 - <<'PY'
           import struct, zlib
