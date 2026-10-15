@@ -39,7 +39,7 @@ jobs:
           p.write_text(s)
           PY
           cp manifest.webmanifest sw.js enhance.js cockpit.js _site/
-          cp assets/viper-cockpit.jpg assets/dr400-cockpit.jpg _site/assets/
+          cp assets/viper-cockpit-hq.webp assets/dr400-cockpit-hq.webp _site/assets/
           touch _site/.nojekyll
           python3 - <<'PY'
           import struct, zlib
