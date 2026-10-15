@@ -1,5 +1,5 @@
-const C="cockpitdrill-v5";
-const CORE=["./","index.html","manifest.webmanifest","enhance.js","cockpit.js","assets/viper-cockpit-hq.webp","assets/dr400-cockpit-hq.webp","icon-192.png","icon-512.png","apple-touch-icon.png"];
+const C="cockpitdrill-v6";
+const CORE=["./","index.html","manifest.webmanifest","enhance.js","cockpit.js","assets/viper-cockpit-hq.webp","assets/dr400-cockpit.jpg","icon-192.png","icon-512.png","apple-touch-icon.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener("fetch",e=>{
